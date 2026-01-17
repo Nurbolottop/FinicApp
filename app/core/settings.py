@@ -19,6 +19,9 @@ from core.project_settings.cors import *
 
 ROOT_URLCONF = 'core.urls'
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 # from core.project_settings.templates import *
 
 AUTH_USER_MODEL = "accounts.User"
