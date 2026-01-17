@@ -13,6 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
+
 from apps.base import models as base_models
 from apps.base import serializers as base_serializers
 from apps.accounts import models as accounts_models
@@ -25,6 +27,11 @@ class OrganizationListView(ListModelMixin, GenericAPIView):
     serializer_class = accounts_serializers.OrganizationSerializer
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        tags=["Public"],
+        summary="List organizations",
+        description="Список организаций (публичный доступ).",
+    )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
@@ -100,6 +107,11 @@ class ReportCreateView(CreateModelMixin, GenericAPIView):
             organization=self.request.user.organization
         )
 
+    @extend_schema(
+        tags=["Organization"],
+        summary="Create report",
+        description="Создать отчёт (только организация).",
+    )
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
 
@@ -123,6 +135,11 @@ class OrganizationDetailView(RetrieveModelMixin, GenericAPIView):
     serializer_class = accounts_serializers.OrganizationSerializer
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        tags=["Public"],
+        summary="Get organization by id",
+        description="Детальная информация об организации (публичный доступ).",
+    )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
@@ -144,6 +161,25 @@ class CampaignListView(ListModelMixin, GenericAPIView):
 
         return qs.order_by("-created_at")
 
+    @extend_schema(
+        tags=["Public"],
+        summary="List campaigns",
+        description="Список кампаний (публичный доступ). Поддерживает фильтры.",
+        parameters=[
+            OpenApiParameter(
+                name="status",
+                required=False,
+                type=str,
+                description="Фильтр по статусу кампании (например active/completed).",
+            ),
+            OpenApiParameter(
+                name="organization_id",
+                required=False,
+                type=int,
+                description="Фильтр по организации.",
+            ),
+        ],
+    )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
@@ -168,6 +204,25 @@ class DonationCreateView(CreateModelMixin, GenericAPIView):
             status=base_models.Payment.Status.PENDING,
         )
 
+    @extend_schema(
+        tags=["Donor"],
+        summary="Create donation",
+        description=(
+            "Создать донат (только донор). После создания автоматически создаётся Payment (stub)."
+        ),
+        examples=[
+            OpenApiExample(
+                "Request",
+                value={
+                    "amount": 500,
+                    "organization_id": 1,
+                    "campaign_id": 1,
+                    "category_id": 1,
+                },
+                request_only=True,
+            ),
+        ],
+    )
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
 
@@ -175,6 +230,21 @@ class DonationCreateView(CreateModelMixin, GenericAPIView):
 class PaymentCompleteStubView(GenericAPIView):
     permission_classes = [IsDonor]
 
+    @extend_schema(
+        tags=["Payments"],
+        summary="Complete payment (stub)",
+        description=(
+            "Заглушка оплаты: переводит Payment и Donation в COMPLETED и создаёт уведомления. "
+            "Доступно только донору, который создал платёж."
+        ),
+        examples=[
+            OpenApiExample(
+                "Response",
+                value={"status": "ok", "payment_id": 10, "donation_id": 15},
+                response_only=True,
+            ),
+        ],
+    )
     def post(self, request, payment_id, *args, **kwargs):
         payment = get_object_or_404(
             base_models.Payment,
@@ -227,10 +297,28 @@ class MyNotificationsView(ListModelMixin, GenericAPIView):
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
+    get = extend_schema(
+        tags=["Notifications"],
+        summary="List my notifications",
+        description="Список уведомлений текущего пользователя.",
+    )(get)
+
 
 class NotificationReadView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Mark notification as read",
+        description="Пометить уведомление как прочитанное.",
+        examples=[
+            OpenApiExample(
+                "Response",
+                value={"status": "ok"},
+                response_only=True,
+            ),
+        ],
+    )
     def post(self, request, notification_id, *args, **kwargs):
         notification = get_object_or_404(
             base_models.Notification,
@@ -255,6 +343,12 @@ class MyDonationsView(ListModelMixin, GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+    get = extend_schema(
+        tags=["Donor"],
+        summary="List my donations",
+        description="Список донатов текущего донора.",
+    )(get)
 
 
 class CampaignCreateView(CreateModelMixin, GenericAPIView):
