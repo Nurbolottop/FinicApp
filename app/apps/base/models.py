@@ -102,3 +102,78 @@ class Donation(models.Model):
 
     def __str__(self):
         return f"{self.donor} -> {self.organization}: {self.amount}"
+
+
+class Report(models.Model):
+    organization = models.ForeignKey(
+        "accounts.Organization",
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reports",
+    )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    amount_spent = models.DecimalField(max_digits=12, decimal_places=2)
+
+    file = models.FileField(
+        upload_to="reports/",
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Отчёт"
+        verbose_name_plural = "Отчёты"
+
+    def __str__(self):
+        return f"{self.title} ({self.organization.name})"
+
+
+class Payment(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Ожидает"
+        COMPLETED = "completed", "Завершён"
+        FAILED = "failed", "Ошибка"
+
+    donor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="payments",
+    )
+
+    donation = models.OneToOneField(
+        Donation,
+        on_delete=models.CASCADE,
+        related_name="payment",
+    )
+
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    provider = models.CharField(
+        max_length=50,
+        default="stub",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Платёж"
+        verbose_name_plural = "Платежи"
+
+    def __str__(self):
+        return f"Payment {self.id} — {self.status}"

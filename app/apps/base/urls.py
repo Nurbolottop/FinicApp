@@ -14,4 +14,18 @@ urlpatterns = [
 
     path("campaigns/create/", base_views.CampaignCreateView.as_view()),
     path("campaigns/my/", base_views.MyCampaignsView.as_view()),
+
+    path("reports/create/", base_views.ReportCreateView.as_view()),
+    path(
+        "organizations/<int:org_id>/reports/",
+        base_views.OrganizationReportsView.as_view(),
+    ),
+
+    path("stats/donor/", base_views.DonorStatsView.as_view()),
+    path("stats/organization/", base_views.OrganizationStatsView.as_view()),
+
+    path(
+        "payments/<int:payment_id>/complete/",
+        base_views.PaymentCompleteStubView.as_view(),
+    ),
 ]

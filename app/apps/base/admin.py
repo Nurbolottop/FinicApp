@@ -21,3 +21,36 @@ class DonationAdmin(admin.ModelAdmin):
     list_display = ("id", "donor", "organization", "campaign", "amount", "status", "created_at")
     search_fields = ("donor__username", "donor__email", "organization__name")
     list_filter = ("status", "created_at")
+
+
+@admin.register(base_models.Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "title",
+        "organization",
+        "campaign",
+        "amount_spent",
+        "created_at",
+    )
+    search_fields = (
+        "title",
+        "organization__name",
+        "campaign__title",
+    )
+    list_filter = ("organization",)
+
+
+@admin.register(base_models.Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "donor",
+        "donation",
+        "amount",
+        "provider",
+        "status",
+        "created_at",
+    )
+    list_filter = ("status", "provider")
+    search_fields = ("donor__email",)

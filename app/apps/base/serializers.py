@@ -89,3 +89,58 @@ class DonationSerializer(serializers.ModelSerializer):
             "campaign_title",
             "created_at",
         )
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(
+        source="organization.name",
+        read_only=True,
+    )
+    campaign_title = serializers.CharField(
+        source="campaign.title",
+        read_only=True,
+    )
+
+    class Meta:
+        model = base_models.Report
+        fields = (
+            "id",
+            "title",
+            "description",
+            "amount_spent",
+            "file",
+            "organization",
+            "organization_name",
+            "campaign",
+            "campaign_title",
+            "created_at",
+        )
+
+
+class ReportCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.Report
+        fields = (
+            "title",
+            "description",
+            "amount_spent",
+            "campaign",
+            "file",
+        )
+
+    def validate_amount_spent(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Сумма должна быть больше 0.")
+        return value
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.Payment
+        fields = (
+            "id",
+            "amount",
+            "provider",
+            "status",
+            "created_at",
+        )
