@@ -54,3 +54,10 @@ class PaymentAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "provider")
     search_fields = ("donor__email",)
+
+
+@admin.register(base_models.Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "title", "is_read", "created_at")
+    list_filter = ("is_read",)
+    search_fields = ("user__email", "title")

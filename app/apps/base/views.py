@@ -9,7 +9,9 @@ from rest_framework.mixins import (
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.base import models as base_models
 from apps.base import serializers as base_serializers
@@ -149,6 +151,8 @@ class CampaignListView(ListModelMixin, GenericAPIView):
 class DonationCreateView(CreateModelMixin, GenericAPIView):
     serializer_class = base_serializers.DonationCreateSerializer
     permission_classes = [IsDonor]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "donation"
 
     def perform_create(self, serializer):
         donation = serializer.save(
@@ -192,11 +196,52 @@ class PaymentCompleteStubView(GenericAPIView):
         donation.status = base_models.Donation.Status.COMPLETED
         donation.save()
 
+        base_models.Notification.objects.create(
+            user=request.user,
+            title="Платёж успешно завершён",
+            message=f"Спасибо! Ваш донат на сумму {payment.amount} успешно зачислен.",
+        )
+
+        base_models.Notification.objects.create(
+            user=donation.organization.user,
+            title="Новый донат",
+            message=f"Поступил донат на сумму {payment.amount}.",
+        )
+
         return Response({
             "status": "ok",
             "payment_id": payment.id,
             "donation_id": donation.id,
         })
+
+
+class MyNotificationsView(ListModelMixin, GenericAPIView):
+    serializer_class = base_serializers.NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return base_models.Notification.objects.filter(
+            user=self.request.user
+        )
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class NotificationReadView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, notification_id, *args, **kwargs):
+        notification = get_object_or_404(
+            base_models.Notification,
+            id=notification_id,
+            user=request.user,
+        )
+
+        notification.is_read = True
+        notification.save()
+
+        return Response({"status": "ok"})
 
 
 class MyDonationsView(ListModelMixin, GenericAPIView):

@@ -28,4 +28,10 @@ urlpatterns = [
         "payments/<int:payment_id>/complete/",
         base_views.PaymentCompleteStubView.as_view(),
     ),
+
+    path("notifications/", base_views.MyNotificationsView.as_view()),
+    path(
+        "notifications/<int:notification_id>/read/",
+        base_views.NotificationReadView.as_view(),
+    ),
 ]

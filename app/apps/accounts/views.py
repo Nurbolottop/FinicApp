@@ -1,6 +1,8 @@
 from rest_framework import permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.accounts import models as accounts_models
 from apps.accounts import serializers as accounts_serializers
@@ -30,3 +32,13 @@ class DonorProfileView(RetrieveModelMixin, GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
+
+
+class LoginView(TokenObtainPairView):
+    """
+    JWT-логин с rate limit через ScopedRateThrottle.
+    Scope: 'login' — см. DEFAULT_THROTTLE_RATES.
+    """
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
