@@ -21,6 +21,8 @@ ROOT_URLCONF = 'core.urls'
 
 # from core.project_settings.templates import *
 
+AUTH_USER_MODEL = "accounts.User"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

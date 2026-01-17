@@ -8,6 +8,7 @@ from rest_framework.mixins import (
 
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 
 from apps.base import models as base_models
@@ -125,9 +126,21 @@ class OrganizationDetailView(RetrieveModelMixin, GenericAPIView):
 
 
 class CampaignListView(ListModelMixin, GenericAPIView):
-    queryset = base_models.Campaign.objects.all()
     serializer_class = base_serializers.CampaignSerializer
     permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        qs = base_models.Campaign.objects.all()
+
+        status_param = self.request.query_params.get("status")
+        if status_param:
+            qs = qs.filter(status=status_param)
+
+        org_id = self.request.query_params.get("organization_id")
+        if org_id:
+            qs = qs.filter(organization_id=org_id)
+
+        return qs.order_by("-created_at")
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -159,10 +172,18 @@ class PaymentCompleteStubView(GenericAPIView):
     permission_classes = [IsDonor]
 
     def post(self, request, payment_id, *args, **kwargs):
-        payment = base_models.Payment.objects.get(
+        payment = get_object_or_404(
+            base_models.Payment,
             id=payment_id,
             donor=request.user,
         )
+
+        if payment.status == base_models.Payment.Status.COMPLETED:
+            return Response({
+                "status": "already_completed",
+                "payment_id": payment.id,
+                "donation_id": payment.donation.id,
+            })
 
         payment.status = base_models.Payment.Status.COMPLETED
         payment.save()
