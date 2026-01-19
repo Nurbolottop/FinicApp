@@ -156,3 +156,31 @@ class NotificationSerializer(serializers.ModelSerializer):
             "is_read",
             "created_at",
         )
+
+
+class StatusSerializer(serializers.Serializer):
+    status = serializers.CharField()
+
+
+class PaymentCompleteStubSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    payment_id = serializers.IntegerField()
+    donation_id = serializers.IntegerField()
+
+
+class MonthlyAmountSerializer(serializers.Serializer):
+    month = serializers.DateTimeField()
+    total = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class DonorStatsSerializer(serializers.Serializer):
+    total_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_donations = serializers.IntegerField()
+    monthly = MonthlyAmountSerializer(many=True)
+
+
+class OrganizationStatsSerializer(serializers.Serializer):
+    total_raised = serializers.DecimalField(max_digits=12, decimal_places=2)
+    donors_count = serializers.IntegerField()
+    campaigns_count = serializers.IntegerField()
+    monthly = MonthlyAmountSerializer(many=True)

@@ -38,6 +38,7 @@ class OrganizationListView(ListModelMixin, GenericAPIView):
 
 class DonorStatsView(GenericAPIView):
     permission_classes = [IsDonor]
+    serializer_class = base_serializers.DonorStatsSerializer
 
     def get(self, request, *args, **kwargs):
         qs = base_models.Donation.objects.filter(
@@ -66,6 +67,7 @@ class DonorStatsView(GenericAPIView):
 
 class OrganizationStatsView(GenericAPIView):
     permission_classes = [IsOrganization]
+    serializer_class = base_serializers.OrganizationStatsSerializer
 
     def get(self, request, *args, **kwargs):
         organization = request.user.organization
@@ -229,6 +231,7 @@ class DonationCreateView(CreateModelMixin, GenericAPIView):
 
 class PaymentCompleteStubView(GenericAPIView):
     permission_classes = [IsDonor]
+    serializer_class = base_serializers.PaymentCompleteStubSerializer
 
     @extend_schema(
         tags=["Payments"],
@@ -306,6 +309,7 @@ class MyNotificationsView(ListModelMixin, GenericAPIView):
 
 class NotificationReadView(GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = base_serializers.StatusSerializer
 
     @extend_schema(
         tags=["Notifications"],

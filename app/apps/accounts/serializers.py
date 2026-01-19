@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
+
 from apps.accounts import models as accounts_models
 
 
@@ -33,6 +36,7 @@ class DonorProfileSerializer(serializers.ModelSerializer):
         model = accounts_models.DonorProfile
         fields = ("user", "avatar", "notifications_enabled", "rank", "impact_points")
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_user(self, obj):
         return {
             "id": obj.user.id,
