@@ -6,12 +6,61 @@
 All endpoints below are prefixed with `/api/`.
 
 ## Authentication (JWT)
-### 1) Register
-- Donor: `POST /api/auth/register/donor/`
-- Organization: `POST /api/auth/register/org/`
+### Donor (OTP)
+#### 1) Register
+- `POST /api/auth/donor/register/`
 
-### 2) Login
-- `POST /api/auth/login/`
+Body:
+```json
+{
+  "phone": "+996700123456",
+  "full_name": "Иванов Иван Иванович"
+}
+```
+
+#### 2) Verify registration (OTP)
+- `POST /api/auth/donor/verify/`
+
+Body:
+```json
+{
+  "phone": "+996700123456",
+  "code": "482931"
+}
+```
+
+#### 3) Login (request OTP)
+- `POST /api/auth/donor/login/`
+
+Body:
+```json
+{
+  "phone": "+996700123456"
+}
+```
+
+#### 4) Verify login (OTP)
+- `POST /api/auth/donor/login/verify/`
+
+Body:
+```json
+{
+  "phone": "+996700123456",
+  "code": "384920"
+}
+```
+
+### Organization (phone + password)
+#### Login
+- `POST /api/auth/org/login/`
+
+Body:
+```json
+{
+  "phone": "+996555000111",
+  "password": "OrgTempPass123"
+}
+```
 
 Response contains:
 - `access` (JWT access token)

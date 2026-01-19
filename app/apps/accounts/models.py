@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q
 
 
 class User(AbstractUser):
@@ -14,7 +17,18 @@ class User(AbstractUser):
         default=Roles.DONOR,
     )
 
-    phone = models.CharField(max_length=30, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+
+    full_name = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phone"],
+                condition=Q(phone__isnull=False) & ~Q(phone=""),
+                name="uniq_accounts_user_phone_not_null",
+            )
+        ]
 
     def is_donor(self) -> bool:
         return self.role == self.Roles.DONOR
@@ -71,3 +85,18 @@ class Organization(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class OTPCode(models.Model):
+    class Purpose(models.TextChoices):
+        REGISTER = "register", "Register"
+        LOGIN = "login", "Login"
+
+    phone = models.CharField(max_length=20)
+    code = models.CharField(max_length=6)
+    purpose = models.CharField(max_length=20, choices=Purpose.choices)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self, ttl_minutes: int = 5) -> bool:
+        return timezone.now() - self.created_at > timedelta(minutes=ttl_minutes)

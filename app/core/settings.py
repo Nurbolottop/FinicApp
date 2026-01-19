@@ -78,6 +78,13 @@ from core.project_settings.internationalization import *
 
 from core.project_settings.rest import *
 
+GREEN_API_INSTANCE_ID = os.getenv("GREEN_API_INSTANCE_ID", "")
+GREEN_API_TOKEN = os.getenv("GREEN_API_TOKEN", "")
+WHATSAPP_PROVIDER = os.getenv("WHATSAPP_PROVIDER", "green_api")
+OTP_MESSAGE_TEMPLATE = os.getenv(
+    "OTP_MESSAGE_TEMPLATE", "Ваш код подтверждения Finic: {code}"
+)
+
 STATIC_URL = '/static/'
 
 _static_dir = BASE_DIR / 'static'

@@ -157,15 +157,15 @@ class Command(BaseCommand):
                 },
             )
 
-            # update campaign stats
-            campaign.raised_amount = (campaign.raised_amount or 0) + amount
-            campaign.donors_count = (
-                base_models.Donation.objects.filter(campaign=campaign)
-                .values("donor")
-                .distinct()
-                .count()
-            )
-            campaign.save()
+            if campaign:
+                campaign.raised_amount = (campaign.raised_amount or 0) + amount
+                campaign.donors_count = (
+                    base_models.Donation.objects.filter(campaign=campaign)
+                    .values("donor")
+                    .distinct()
+                    .count()
+                )
+                campaign.save()
 
             org.total_raised = (org.total_raised or 0) + amount
             org.save()
@@ -213,5 +213,5 @@ class Command(BaseCommand):
         # --------------------------------------------------
         self.stdout.write(self.style.SUCCESS("✅ Demo data seeded successfully!"))
         self.stdout.write(self.style.SUCCESS("🔐 Password for ALL users: 12345678"))
-        self.stdout.write(self.style.SUCCESS("👤 Donors: donor1@finic.test ... donor5@finic.test"))
-        self.stdout.write(self.style.SUCCESS("🏢 Orgs: org1@finic.test ... org3@finic.test"))
+        self.stdout.write(self.style.SUCCESS("👤 Donors: created (login via OTP by phone)"))
+        self.stdout.write(self.style.SUCCESS("🏢 Orgs: created (login via phone + password)"))

@@ -7,42 +7,23 @@ from apps.accounts import models as accounts_models
 User = get_user_model()
 
 
-class RegisterDonorSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
-
-    class Meta:
-        model = User
-        fields = ("username", "email", "password", "phone")
-
-    def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.role = User.Roles.DONOR
-        user.set_password(password)
-        user.save()
-        accounts_models.DonorProfile.objects.create(user=user)
-        return user
+class DonorRegisterSerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20)
+    full_name = serializers.CharField(max_length=255)
 
 
-class RegisterOrgSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
-    org_name = serializers.CharField(write_only=True)
+class PhoneOTPVerifySerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20)
+    code = serializers.CharField(max_length=6)
 
-    class Meta:
-        model = User
-        fields = ("username", "email", "password", "phone", "org_name")
 
-    def create(self, validated_data):
-        org_name = validated_data.pop("org_name")
-        password = validated_data.pop("password")
+class DonorLoginSerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20)
 
-        user = User(**validated_data)
-        user.role = User.Roles.ORG
-        user.set_password(password)
-        user.save()
 
-        accounts_models.Organization.objects.create(user=user, name=org_name)
-        return user
+class OrgLoginSerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20)
+    password = serializers.CharField(write_only=True)
 
 
 class DonorProfileSerializer(serializers.ModelSerializer):
@@ -57,6 +38,7 @@ class DonorProfileSerializer(serializers.ModelSerializer):
             "id": obj.user.id,
             "username": obj.user.username,
             "email": obj.user.email,
+            "full_name": obj.user.full_name,
             "role": obj.user.role,
             "phone": obj.user.phone,
         }

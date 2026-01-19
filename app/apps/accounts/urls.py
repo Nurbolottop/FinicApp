@@ -5,10 +5,12 @@ from apps.accounts import views as accounts_views
 
 
 urlpatterns = [
-    path("auth/register/donor/", accounts_views.RegisterDonorView.as_view()),
-    path("auth/register/org/", accounts_views.RegisterOrgView.as_view()),
+    path("auth/donor/register/", accounts_views.DonorRegisterView.as_view()),
+    path("auth/donor/verify/", accounts_views.DonorVerifyView.as_view()),
+    path("auth/donor/login/", accounts_views.DonorLoginView.as_view()),
+    path("auth/donor/login/verify/", accounts_views.DonorLoginVerifyView.as_view()),
 
-    path("auth/login/", accounts_views.LoginView.as_view()),
+    path("auth/org/login/", accounts_views.OrgLoginView.as_view()),
     path("auth/refresh/", TokenRefreshView.as_view()),
 
     path("me/donor-profile/", accounts_views.DonorProfileView.as_view()),

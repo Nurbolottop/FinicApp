@@ -1,9 +1,12 @@
 # Finic API — Summary
 
 ## Auth
-- POST /api/auth/register/donor/
-- POST /api/auth/register/org/
-- POST /api/auth/login/
+- POST /api/auth/donor/register/
+- POST /api/auth/donor/verify/
+- POST /api/auth/donor/login/
+- POST /api/auth/donor/login/verify/
+
+- POST /api/auth/org/login/
 - POST /api/auth/refresh/
 
 ## Donor

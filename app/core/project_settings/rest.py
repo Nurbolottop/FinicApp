@@ -25,6 +25,8 @@ REST_FRAMEWORK = {
         "anon": "100/day",
         "user": "1000/day",
         "login": "10/hour",
+        "otp_send": "5/10min",
+        "otp_verify": "5/10min",
         "donation": "20/hour",
     },
 

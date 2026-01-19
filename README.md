@@ -72,22 +72,26 @@
 
  После запуска доступно по адресу:
 
- - `/api/docs/`
+- `/api/docs/`
 
- ---
+---
 
- ## 🔐 Аутентификация
+## 🔐 Аутентификация
 
- Используется JWT:
+Используется JWT:
 
- - `POST /api/auth/login/`
- - `POST /api/auth/refresh/`
+- Donor (OTP):
+  - `POST /api/auth/donor/register/`
+  - `POST /api/auth/donor/verify/`
+  - `POST /api/auth/donor/login/`
+  - `POST /api/auth/donor/login/verify/`
 
- Передавать токен в заголовке:
+- Organization:
+  - `POST /api/auth/org/login/`
 
- - `Authorization: Bearer <access_token>`
+- `POST /api/auth/refresh/`
 
- ---
+Передавать токен в заголовке:
 
  ## 👤 Роли
 
