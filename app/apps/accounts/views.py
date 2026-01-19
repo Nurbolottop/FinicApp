@@ -5,7 +5,6 @@ from rest_framework import permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
@@ -13,6 +12,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema
 from apps.accounts import models as accounts_models
 from apps.accounts import serializers as accounts_serializers
 from apps.accounts.services.otp import send_otp
+from apps.accounts.throttles import ScopedRateThrottleWithPeriods
 
 
 User = get_user_model()
@@ -37,7 +37,7 @@ def _issue_tokens(user: User) -> dict:
 class DonorRegisterView(GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = accounts_serializers.DonorRegisterSerializer
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottleWithPeriods]
     throttle_scope = "otp_send"
 
     @extend_schema(
@@ -93,7 +93,7 @@ class DonorRegisterView(GenericAPIView):
 class DonorVerifyView(GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = accounts_serializers.PhoneOTPVerifySerializer
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottleWithPeriods]
     throttle_scope = "otp_verify"
 
     @extend_schema(
@@ -145,7 +145,7 @@ class DonorVerifyView(GenericAPIView):
 class DonorLoginView(GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = accounts_serializers.DonorLoginSerializer
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottleWithPeriods]
     throttle_scope = "otp_send"
 
     @extend_schema(
@@ -182,7 +182,7 @@ class DonorLoginView(GenericAPIView):
 class DonorLoginVerifyView(GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = accounts_serializers.PhoneOTPVerifySerializer
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottleWithPeriods]
     throttle_scope = "otp_verify"
 
     @extend_schema(
@@ -249,7 +249,7 @@ class DonorProfileView(RetrieveModelMixin, GenericAPIView):
 class OrgLoginView(GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = accounts_serializers.OrgLoginSerializer
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottleWithPeriods]
     throttle_scope = "login"
 
     @extend_schema(
