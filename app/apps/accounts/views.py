@@ -7,6 +7,7 @@ from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
@@ -292,6 +293,7 @@ class DonorProfileEditView(GenericAPIView):
     permission_classes = [IsAuthenticated, IsDonor]
 
     serializer_class = accounts_serializers.DonorProfileEditSerializer
+    parser_classes = [MultiPartParser, FormParser]
 
     def _ensure_profile(self):
         accounts_models.DonorProfile.objects.get_or_create(user=self.request.user)
@@ -319,6 +321,7 @@ class DonorProfileEditView(GenericAPIView):
 class OrganizationProfileEditView(GenericAPIView):
     permission_classes = [IsAuthenticated, IsOrganization]
     serializer_class = accounts_serializers.OrganizationProfileEditSerializer
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_organization(self):
         try:

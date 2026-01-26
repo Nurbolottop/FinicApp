@@ -86,9 +86,9 @@ class DonorProfileEditSerializer(serializers.ModelSerializer):
             donor_profile, _ = accounts_models.DonorProfile.objects.get_or_create(
                 user=instance
             )
-            avatar = donor_profile_data.get("avatar")
-            donor_profile.avatar = avatar
-            donor_profile.save(update_fields=["avatar"])
+            if "avatar" in donor_profile_data:
+                donor_profile.avatar = donor_profile_data.get("avatar")
+                donor_profile.save(update_fields=["avatar"])
 
         return instance
 
