@@ -10,8 +10,19 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug")
 
 
+class CampaignImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.CampaignImage
+        fields = (
+            "id",
+            "image",
+            "created_at",
+        )
+
+
 class CampaignSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(source="organization.name", read_only=True)
+    images = CampaignImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = base_models.Campaign
@@ -28,19 +39,76 @@ class CampaignSerializer(serializers.ModelSerializer):
             "organization",
             "organization_name",
             "image",
+            "images",
             "created_at",
         )
 
 
 class CampaignCreateSerializer(serializers.ModelSerializer):
+    images = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=False,
+    )
+
     class Meta:
         model = base_models.Campaign
-        fields = ("title", "description", "goal_amount", "end_date", "image")
+        fields = ("title", "description", "goal_amount", "end_date", "image", "images")
 
     def validate_goal_amount(self, value):
         if value <= 0:
             raise serializers.ValidationError("Цель должна быть больше 0.")
         return value
+
+    def to_internal_value(self, data):
+        if hasattr(data, "getlist") and "images" in data:
+            images = data.getlist("images")
+            if images:
+                try:
+                    data = data.copy()
+                except Exception:
+                    data = dict(data)
+
+                if hasattr(data, "setlist"):
+                    data.setlist("images", images)
+                else:
+                    data["images"] = images
+
+        return super().to_internal_value(data)
+
+    def validate_images(self, value):
+        if value is None:
+            return value
+        if len(value) > 10:
+            raise serializers.ValidationError("Максимум 10 картинок")
+        return value
+
+    def create(self, validated_data):
+        images = validated_data.pop("images", [])
+        campaign = super().create(validated_data)
+
+        if images:
+            if len(images) > 10:
+                raise serializers.ValidationError("Максимум 10 картинок")
+            base_models.CampaignImage.objects.bulk_create(
+                [base_models.CampaignImage(campaign=campaign, image=img) for img in images]
+            )
+
+        return campaign
+
+    def update(self, instance, validated_data):
+        images = validated_data.pop("images", None)
+        instance = super().update(instance, validated_data)
+
+        if images is not None:
+            current_count = instance.images.count()
+            if current_count + len(images) > 10:
+                raise serializers.ValidationError("Максимум 10 картинок")
+            base_models.CampaignImage.objects.bulk_create(
+                [base_models.CampaignImage(campaign=instance, image=img) for img in images]
+            )
+
+        return instance
 
 
 class DonationCreateSerializer(serializers.ModelSerializer):

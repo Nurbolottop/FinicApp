@@ -12,6 +12,7 @@ from django.db.models.functions import TruncMonth
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -383,6 +384,7 @@ class MyDonationsView(ListModelMixin, GenericAPIView):
 class CampaignCreateView(CreateModelMixin, GenericAPIView):
     serializer_class = base_serializers.CampaignCreateSerializer
     permission_classes = [IsOrganization]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_organization(self):
         try:
@@ -421,6 +423,26 @@ class MyCampaignsView(ListModelMixin, GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class CampaignUpdateView(UpdateModelMixin, GenericAPIView):
+    serializer_class = base_serializers.CampaignCreateSerializer
+    permission_classes = [IsOrganization]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        try:
+            organization = self.request.user.organization
+        except ObjectDoesNotExist:
+            raise ValidationError("User has no organization")
+
+        return base_models.Campaign.objects.filter(organization=organization)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
 
 class DonorBankDetailsView(GenericAPIView):
@@ -478,22 +500,3 @@ class RecurringDonationUpdateView(UpdateModelMixin, GenericAPIView):
 
     def patch(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
-
-
-class CampaignUpdateView(UpdateModelMixin, GenericAPIView):
-    serializer_class = base_serializers.CampaignCreateSerializer
-    permission_classes = [IsOrganization]
-
-    def get_queryset(self):
-        try:
-            organization = self.request.user.organization
-        except ObjectDoesNotExist:
-            raise ValidationError("User has no organization")
-
-        return base_models.Campaign.objects.filter(organization=organization)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)

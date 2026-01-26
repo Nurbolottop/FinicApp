@@ -16,6 +16,12 @@ class CampaignAdmin(admin.ModelAdmin):
     list_filter = ("status",)
 
 
+@admin.register(base_models.CampaignImage)
+class CampaignImageAdmin(admin.ModelAdmin):
+    list_display = ("id", "campaign", "image", "created_at")
+    search_fields = ("campaign__title",)
+
+
 @admin.register(base_models.Donation)
 class DonationAdmin(admin.ModelAdmin):
     list_display = ("id", "donor", "organization", "campaign", "amount", "status", "created_at")

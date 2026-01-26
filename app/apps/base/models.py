@@ -60,6 +60,23 @@ class Campaign(models.Model):
         return f"{self.title}"
 
 
+class CampaignImage(models.Model):
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="campaigns/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Картинка кампании"
+        verbose_name_plural = "Картинки кампании"
+
+    def __str__(self):
+        return f"CampaignImage {self.id}"
+
+
 class Donation(models.Model):
     class Status(models.TextChoices):
         COMPLETED = "completed", "Завершено"
