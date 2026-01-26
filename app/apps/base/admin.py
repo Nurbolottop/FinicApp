@@ -11,7 +11,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(base_models.Campaign)
 class CampaignAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "organization", "status", "goal_amount", "raised_amount")
+    list_display = ("id", "title", "organization", "status", "goal_amount", "raised_amount", "image")
     search_fields = ("title", "organization__name")
     list_filter = ("status",)
 
@@ -61,3 +61,9 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "title", "is_read", "created_at")
     list_filter = ("is_read",)
     search_fields = ("user__email", "title")
+
+
+@admin.register(base_models.DonorBankDetails)
+class DonorBankDetailsAdmin(admin.ModelAdmin):
+    list_display = ("id", "donor", "bank_name", "account_number", "created_at")
+    search_fields = ("donor__phone", "bank_name", "account_number")

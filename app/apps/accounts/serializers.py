@@ -61,3 +61,39 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "verified_status",
             "total_raised",
         )
+
+
+class DonorProfileEditSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField(
+        source="donor_profile.avatar",
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = User
+        fields = ("full_name", "phone", "avatar")
+        read_only_fields = ("phone",)
+
+    def update(self, instance, validated_data):
+        donor_profile_data = validated_data.pop("donor_profile", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if donor_profile_data is not None:
+            donor_profile, _ = accounts_models.DonorProfile.objects.get_or_create(
+                user=instance
+            )
+            avatar = donor_profile_data.get("avatar")
+            donor_profile.avatar = avatar
+            donor_profile.save(update_fields=["avatar"])
+
+        return instance
+
+
+class OrganizationProfileEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = accounts_models.Organization
+        fields = ("name", "description", "city", "website", "logo")

@@ -66,6 +66,8 @@ class Organization(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    city = models.CharField(max_length=255, blank=True, default="")
+    website = models.URLField(blank=True, default="")
     logo = models.ImageField(upload_to="org_logos/", blank=True, null=True)
 
     email = models.EmailField(blank=True)

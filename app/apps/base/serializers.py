@@ -27,6 +27,7 @@ class CampaignSerializer(serializers.ModelSerializer):
             "end_date",
             "organization",
             "organization_name",
+            "image",
             "created_at",
         )
 
@@ -34,7 +35,7 @@ class CampaignSerializer(serializers.ModelSerializer):
 class CampaignCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = base_models.Campaign
-        fields = ("title", "description", "goal_amount", "end_date")
+        fields = ("title", "description", "goal_amount", "end_date", "image")
 
     def validate_goal_amount(self, value):
         if value <= 0:
@@ -184,3 +185,33 @@ class OrganizationStatsSerializer(serializers.Serializer):
     donors_count = serializers.IntegerField()
     campaigns_count = serializers.IntegerField()
     monthly = MonthlyAmountSerializer(many=True)
+
+
+class DonorBankDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.DonorBankDetails
+        fields = (
+            "bank_name",
+            "account_number",
+            "account_holder",
+            "extra_info",
+        )
+
+
+class RecurringDonationSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(
+        source="organization.name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = base_models.RecurringDonation
+        fields = (
+            "id",
+            "organization",
+            "organization_name",
+            "amount",
+            "interval",
+            "is_active",
+            "created_at",
+        )

@@ -4,11 +4,14 @@ from rest_framework.mixins import (
     ListModelMixin,
     CreateModelMixin,
     RetrieveModelMixin,
+    UpdateModelMixin,
 )
 
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -345,6 +348,28 @@ class MyDonationsView(ListModelMixin, GenericAPIView):
             donor=self.request.user
         ).order_by("-created_at")
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        total_amount = queryset.aggregate(total=Sum("amount"))["total"] or 0
+        organizations_count = queryset.values("organization_id").distinct().count()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data["total_amount"] = total_amount
+            response.data["organizations_count"] = organizations_count
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "total_amount": total_amount,
+                "organizations_count": organizations_count,
+                "results": serializer.data,
+            }
+        )
+
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
@@ -359,15 +384,22 @@ class CampaignCreateView(CreateModelMixin, GenericAPIView):
     serializer_class = base_serializers.CampaignCreateSerializer
     permission_classes = [IsOrganization]
 
+    def get_organization(self):
+        try:
+            return self.request.user.organization
+        except ObjectDoesNotExist:
+            raise ValidationError("User has no organization")
+
+    def perform_create(self, serializer):
+        organization = self.get_organization()
+        serializer.save(organization=organization)
+
     def post(self, request, *args, **kwargs):
         """
         Создание кампании организацией.
         organization берётся из request.user.organization.
         """
         return self.create(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization)
 
 
 class MyCampaignsView(ListModelMixin, GenericAPIView):
@@ -378,9 +410,90 @@ class MyCampaignsView(ListModelMixin, GenericAPIView):
         """
         Возвращает только те кампании, которые принадлежат текущей организации.
         """
+        try:
+            organization = self.request.user.organization
+        except ObjectDoesNotExist:
+            raise ValidationError("User has no organization")
+
         return base_models.Campaign.objects.filter(
-            organization=self.request.user.organization
+            organization=organization
         ).order_by("-created_at")
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class DonorBankDetailsView(GenericAPIView):
+    serializer_class = base_serializers.DonorBankDetailsSerializer
+    permission_classes = [IsDonor]
+
+    def get_object(self):
+        donor = self.request.user
+        obj, _ = base_models.DonorBankDetails.objects.get_or_create(donor=donor)
+        return obj
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class RecurringDonationListCreateView(ListModelMixin, CreateModelMixin, GenericAPIView):
+    serializer_class = base_serializers.RecurringDonationSerializer
+    permission_classes = [IsDonor]
+
+    def get_queryset(self):
+        return base_models.RecurringDonation.objects.filter(donor=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(donor=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class RecurringDonationUpdateView(UpdateModelMixin, GenericAPIView):
+    serializer_class = base_serializers.RecurringDonationSerializer
+    permission_classes = [IsDonor]
+
+    def get_queryset(self):
+        return base_models.RecurringDonation.objects.filter(donor=self.request.user)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+
+class CampaignUpdateView(UpdateModelMixin, GenericAPIView):
+    serializer_class = base_serializers.CampaignCreateSerializer
+    permission_classes = [IsOrganization]
+
+    def get_queryset(self):
+        try:
+            organization = self.request.user.organization
+        except ObjectDoesNotExist:
+            raise ValidationError("User has no organization")
+
+        return base_models.Campaign.objects.filter(organization=organization)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)

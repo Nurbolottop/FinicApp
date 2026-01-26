@@ -4,13 +4,16 @@ from django.contrib.auth import get_user_model
 from rest_framework import permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
 
 from apps.accounts import models as accounts_models
 from apps.accounts import serializers as accounts_serializers
+from apps.accounts.permissions import IsDonor, IsOrganization
 from apps.accounts.services.otp import send_otp
 from apps.accounts.throttles import ScopedRateThrottleWithPeriods
 
@@ -283,3 +286,62 @@ class OrgLoginView(GenericAPIView):
             return Response({"detail": "User is not active."}, status=400)
 
         return Response(_issue_tokens(user))
+
+
+class DonorProfileEditView(GenericAPIView):
+    permission_classes = [IsAuthenticated, IsDonor]
+
+    serializer_class = accounts_serializers.DonorProfileEditSerializer
+
+    def _ensure_profile(self):
+        accounts_models.DonorProfile.objects.get_or_create(user=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        self._ensure_profile()
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        self._ensure_profile()
+        serializer = self.get_serializer(request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        self._ensure_profile()
+        serializer = self.get_serializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class OrganizationProfileEditView(GenericAPIView):
+    permission_classes = [IsAuthenticated, IsOrganization]
+    serializer_class = accounts_serializers.OrganizationProfileEditSerializer
+
+    def get_organization(self):
+        try:
+            return self.request.user.organization
+        except accounts_models.Organization.DoesNotExist:
+            raise ValidationError("User has no organization")
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_organization())
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_organization(), data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            self.get_organization(),
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

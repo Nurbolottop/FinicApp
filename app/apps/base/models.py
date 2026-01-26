@@ -44,6 +44,12 @@ class Campaign(models.Model):
     start_date = models.DateField(auto_now_add=True)
     end_date = models.DateField(null=True, blank=True)
 
+    image = models.ImageField(
+        upload_to="campaigns/",
+        null=True,
+        blank=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -200,3 +206,54 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.user}"
+
+
+class DonorBankDetails(models.Model):
+    donor = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bank_details",
+    )
+    bank_name = models.CharField(max_length=255, blank=True, default="")
+    account_number = models.CharField(max_length=255, blank=True, default="")
+    account_holder = models.CharField(max_length=255, blank=True, default="")
+    extra_info = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Банковские реквизиты донора"
+        verbose_name_plural = "Банковские реквизиты доноров"
+
+    def __str__(self):
+        return f"{self.donor} — {self.bank_name}"
+
+
+class RecurringDonation(models.Model):
+    class Interval(models.TextChoices):
+        DAILY = "daily", "Ежедневно"
+
+    donor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recurring_donations",
+    )
+    organization = models.ForeignKey(
+        "accounts.Organization",
+        on_delete=models.CASCADE,
+        related_name="recurring_donations",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    interval = models.CharField(
+        max_length=20,
+        choices=Interval.choices,
+        default=Interval.DAILY,
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Регулярный донат"
+        verbose_name_plural = "Регулярные донаты"
+
+    def __str__(self):
+        return f"{self.donor} -> {self.organization} ({self.amount} {self.interval})"
