@@ -40,6 +40,50 @@ class OrganizationListView(ListModelMixin, GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
+class MyReportsView(ListModelMixin, GenericAPIView):
+    serializer_class = base_serializers.ReportSerializer
+    permission_classes = [IsOrganization]
+
+    def get_queryset(self):
+        try:
+            organization = self.request.user.organization
+        except ObjectDoesNotExist:
+            raise ValidationError("User has no organization")
+
+        return base_models.Report.objects.filter(
+            organization=organization
+        ).order_by("-created_at")
+
+    @extend_schema(
+        tags=["Organization"],
+        summary="List my reports",
+        description="Список отчётов текущей организации.",
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class MyReportDetailView(RetrieveModelMixin, GenericAPIView):
+    serializer_class = base_serializers.ReportSerializer
+    permission_classes = [IsOrganization]
+
+    def get_queryset(self):
+        try:
+            organization = self.request.user.organization
+        except ObjectDoesNotExist:
+            raise ValidationError("User has no organization")
+
+        return base_models.Report.objects.filter(organization=organization)
+
+    @extend_schema(
+        tags=["Organization"],
+        summary="Get my report by id",
+        description="Детальная информация по отчёту текущей организации.",
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+
 class DonorStatsView(GenericAPIView):
     permission_classes = [IsDonor]
     serializer_class = base_serializers.DonorStatsSerializer

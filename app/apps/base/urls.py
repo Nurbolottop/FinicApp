@@ -20,6 +20,8 @@ urlpatterns = [
     path("campaigns/my/", base_views.MyCampaignsView.as_view()),
 
     path("reports/create/", base_views.ReportCreateView.as_view()),
+    path("reports/my/", base_views.MyReportsView.as_view()),
+    path("reports/my/<int:pk>/", base_views.MyReportDetailView.as_view()),
     path(
         "organizations/<int:org_id>/reports/",
         base_views.OrganizationReportsView.as_view(),
