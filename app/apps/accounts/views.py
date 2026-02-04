@@ -298,11 +298,21 @@ class DonorProfileEditView(GenericAPIView):
     def _ensure_profile(self):
         accounts_models.DonorProfile.objects.get_or_create(user=self.request.user)
 
+    @extend_schema(
+        tags=["Profile"],
+        summary="Get my donor profile",
+        description="Возвращает расширенный профиль текущего донора (User + DonorProfile).",
+    )
     def get(self, request, *args, **kwargs):
         self._ensure_profile()
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
+    @extend_schema(
+        tags=["Profile"],
+        summary="Update my donor profile",
+        description="Полное обновление профиля текущего донора (User + DonorProfile).",
+    )
     def put(self, request, *args, **kwargs):
         self._ensure_profile()
         serializer = self.get_serializer(request.user, data=request.data)
@@ -310,6 +320,11 @@ class DonorProfileEditView(GenericAPIView):
         serializer.save()
         return Response(serializer.data)
 
+    @extend_schema(
+        tags=["Profile"],
+        summary="Partially update my donor profile",
+        description="Частичное обновление профиля текущего донора (User + DonorProfile).",
+    )
     def patch(self, request, *args, **kwargs):
         self._ensure_profile()
         serializer = self.get_serializer(request.user, data=request.data, partial=True)

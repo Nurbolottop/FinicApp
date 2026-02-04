@@ -22,6 +22,12 @@ class CampaignImageSerializer(serializers.ModelSerializer):
 
 class CampaignSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(source="organization.name", read_only=True)
+    category = serializers.SlugRelatedField(
+        slug_field="slug",
+        read_only=True,
+    )
+    category_slug = serializers.SlugField(source="category.slug", read_only=True)
+    category_name = serializers.CharField(source="category.name", read_only=True)
     images = CampaignImageSerializer(many=True, read_only=True)
 
     class Meta:
@@ -38,6 +44,9 @@ class CampaignSerializer(serializers.ModelSerializer):
             "end_date",
             "organization",
             "organization_name",
+            "category",
+            "category_slug",
+            "category_name",
             "image",
             "images",
             "created_at",
@@ -45,6 +54,12 @@ class CampaignSerializer(serializers.ModelSerializer):
 
 
 class CampaignCreateSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        queryset=base_models.Category.objects.all(),
+        slug_field="slug",
+        required=False,
+        allow_null=True,
+    )
     images = serializers.ListField(
         child=serializers.ImageField(),
         write_only=True,
@@ -53,7 +68,15 @@ class CampaignCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = base_models.Campaign
-        fields = ("title", "description", "goal_amount", "end_date", "image", "images")
+        fields = (
+            "title",
+            "description",
+            "category",
+            "goal_amount",
+            "end_date",
+            "image",
+            "images",
+        )
 
     def validate_goal_amount(self, value):
         if value <= 0:

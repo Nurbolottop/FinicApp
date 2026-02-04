@@ -13,8 +13,6 @@ urlpatterns = [
     path("auth/org/login/", accounts_views.OrgLoginView.as_view()),
     path("auth/refresh/", TokenRefreshView.as_view()),
 
-    path("me/donor-profile/", accounts_views.DonorProfileView.as_view()),
-
     path("profile/donor/", accounts_views.DonorProfileEditView.as_view()),
     path("profile/org/", accounts_views.OrganizationProfileEditView.as_view()),
 ]

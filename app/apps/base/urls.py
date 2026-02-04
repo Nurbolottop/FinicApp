@@ -7,6 +7,8 @@ urlpatterns = [
     path("organizations/", base_views.OrganizationListView.as_view()),
     path("organizations/<int:pk>/", base_views.OrganizationDetailView.as_view()),
 
+    path("categories/", base_views.CategoryListView.as_view()),
+
     path("campaigns/", base_views.CampaignListView.as_view()),
     path("campaigns/<int:pk>/", base_views.CampaignUpdateView.as_view()),
 

@@ -99,6 +99,7 @@ class Command(BaseCommand):
             "Образование",
             "Дети",
             "Экология",
+            "Пожилые",
             "Животные",
         ]
         categories = []
@@ -120,6 +121,7 @@ class Command(BaseCommand):
                 title=f"Campaign {i} ({org.name})",
                 defaults={
                     "description": f"Demo campaign description #{i}",
+                    "category": random.choice(categories),
                     "goal_amount": Decimal(random.randint(100_000, 800_000)),
                     "status": base_models.Campaign.Status.ACTIVE,
                 },

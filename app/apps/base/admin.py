@@ -11,9 +11,18 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(base_models.Campaign)
 class CampaignAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "organization", "status", "goal_amount", "raised_amount", "image")
+    list_display = (
+        "id",
+        "title",
+        "organization",
+        "category",
+        "status",
+        "goal_amount",
+        "raised_amount",
+        "image",
+    )
     search_fields = ("title", "organization__name")
-    list_filter = ("status",)
+    list_filter = ("status", "category")
 
 
 @admin.register(base_models.CampaignImage)

@@ -69,11 +69,40 @@ class DonorProfileEditSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    notifications_enabled = serializers.BooleanField(
+        source="donor_profile.notifications_enabled",
+        required=False,
+    )
+    rank = serializers.CharField(
+        source="donor_profile.rank",
+        read_only=True,
+    )
+    impact_points = serializers.IntegerField(
+        source="donor_profile.impact_points",
+        read_only=True,
+    )
 
     class Meta:
         model = User
-        fields = ("full_name", "phone", "avatar")
-        read_only_fields = ("phone",)
+        fields = (
+            "id",
+            "username",
+            "email",
+            "full_name",
+            "phone",
+            "role",
+            "avatar",
+            "notifications_enabled",
+            "rank",
+            "impact_points",
+        )
+        read_only_fields = (
+            "id",
+            "phone",
+            "role",
+            "rank",
+            "impact_points",
+        )
 
     def update(self, instance, validated_data):
         donor_profile_data = validated_data.pop("donor_profile", None)
@@ -86,9 +115,18 @@ class DonorProfileEditSerializer(serializers.ModelSerializer):
             donor_profile, _ = accounts_models.DonorProfile.objects.get_or_create(
                 user=instance
             )
+            profile_update_fields = []
             if "avatar" in donor_profile_data:
                 donor_profile.avatar = donor_profile_data.get("avatar")
-                donor_profile.save(update_fields=["avatar"])
+                profile_update_fields.append("avatar")
+            if "notifications_enabled" in donor_profile_data:
+                donor_profile.notifications_enabled = donor_profile_data.get(
+                    "notifications_enabled"
+                )
+                profile_update_fields.append("notifications_enabled")
+
+            if profile_update_fields:
+                donor_profile.save(update_fields=profile_update_fields)
 
         return instance
 
@@ -96,4 +134,4 @@ class DonorProfileEditSerializer(serializers.ModelSerializer):
 class OrganizationProfileEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = accounts_models.Organization
-        fields = ("name", "description", "city", "website", "logo")
+        fields = ("name", "description", "city", "website", "logo", "email", "phone")

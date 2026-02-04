@@ -40,6 +40,21 @@ class OrganizationListView(ListModelMixin, GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
+class CategoryListView(ListModelMixin, GenericAPIView):
+    queryset = base_models.Category.objects.all().order_by("name")
+    serializer_class = base_serializers.CategorySerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+
+    @extend_schema(
+        tags=["Public"],
+        summary="List categories",
+        description="Список категорий сборов (публичный доступ).",
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
 class MyReportsView(ListModelMixin, GenericAPIView):
     queryset = base_models.Report.objects.all()
     serializer_class = base_serializers.ReportSerializer
@@ -221,6 +236,10 @@ class CampaignListView(ListModelMixin, GenericAPIView):
         if org_id:
             qs = qs.filter(organization_id=org_id)
 
+        category_slug = self.request.query_params.get("category")
+        if category_slug:
+            qs = qs.filter(category__slug=category_slug)
+
         return qs.order_by("-created_at")
 
     @extend_schema(
@@ -239,6 +258,12 @@ class CampaignListView(ListModelMixin, GenericAPIView):
                 required=False,
                 type=int,
                 description="Фильтр по организации.",
+            ),
+            OpenApiParameter(
+                name="category",
+                required=False,
+                type=str,
+                description="Фильтр по категории (slug).",
             ),
         ],
     )

@@ -27,6 +27,13 @@ class Campaign(models.Model):
         on_delete=models.CASCADE,
         related_name="campaigns",
     )
+    category = models.ForeignKey(
+        "base.Category",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="campaigns",
+    )
     title = models.CharField(max_length=255)
     description = models.TextField()
 
