@@ -41,12 +41,18 @@ class OrganizationListView(ListModelMixin, GenericAPIView):
 
 
 class MyReportsView(ListModelMixin, GenericAPIView):
+    queryset = base_models.Report.objects.all()
     serializer_class = base_serializers.ReportSerializer
     permission_classes = [IsOrganization]
 
     def get_queryset(self):
+        request = getattr(self, "request", None)
+        user = getattr(request, "user", None)
+        if not user or not getattr(user, "is_authenticated", False):
+            return base_models.Report.objects.none()
+
         try:
-            organization = self.request.user.organization
+            organization = user.organization
         except ObjectDoesNotExist:
             raise ValidationError("User has no organization")
 
@@ -64,12 +70,18 @@ class MyReportsView(ListModelMixin, GenericAPIView):
 
 
 class MyReportDetailView(RetrieveModelMixin, GenericAPIView):
+    queryset = base_models.Report.objects.all()
     serializer_class = base_serializers.ReportSerializer
     permission_classes = [IsOrganization]
 
     def get_queryset(self):
+        request = getattr(self, "request", None)
+        user = getattr(request, "user", None)
+        if not user or not getattr(user, "is_authenticated", False):
+            return base_models.Report.objects.none()
+
         try:
-            organization = self.request.user.organization
+            organization = user.organization
         except ObjectDoesNotExist:
             raise ValidationError("User has no organization")
 
