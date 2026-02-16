@@ -581,3 +581,52 @@ class RecurringDonationUpdateView(UpdateModelMixin, GenericAPIView):
 
     def patch(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
+
+
+class HadithListView(ListModelMixin, GenericAPIView):
+    queryset = base_models.Hadith.objects.all().order_by("-created_at")
+    serializer_class = base_serializers.HadithSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+
+    @extend_schema(
+        tags=["Public"],
+        summary="List all hadiths",
+        description="Список всех хадисов (публичный доступ).",
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class HadithDetailView(RetrieveModelMixin, GenericAPIView):
+    queryset = base_models.Hadith.objects.all()
+    serializer_class = base_serializers.HadithSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        tags=["Public"],
+        summary="Get hadith by ID",
+        description="Получить хадис по ID.",
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+
+class HadithRandomView(GenericAPIView):
+    serializer_class = base_serializers.HadithSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        tags=["Public"],
+        summary="Get random hadith",
+        description="Получить случайный хадис.",
+    )
+    def get(self, request, *args, **kwargs):
+        hadith = base_models.Hadith.objects.order_by("?").first()
+        if not hadith:
+            return Response(
+                {"detail": "No hadiths found in database."},
+                status=404
+            )
+        serializer = self.get_serializer(hadith)
+        return Response(serializer.data)

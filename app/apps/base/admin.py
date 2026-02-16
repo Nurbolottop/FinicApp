@@ -82,3 +82,14 @@ class NotificationAdmin(admin.ModelAdmin):
 class DonorBankDetailsAdmin(admin.ModelAdmin):
     list_display = ("id", "donor", "bank_name", "account_number", "created_at")
     search_fields = ("donor__phone", "bank_name", "account_number")
+
+
+@admin.register(base_models.Hadith)
+class HadithAdmin(admin.ModelAdmin):
+    list_display = ("id", "source", "text_preview", "created_at")
+    search_fields = ("text", "source")
+    list_filter = ("source",)
+
+    def text_preview(self, obj):
+        return obj.text[:100] + "..." if len(obj.text) > 100 else obj.text
+    text_preview.short_description = "Текст хадиса"

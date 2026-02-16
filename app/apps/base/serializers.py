@@ -306,3 +306,9 @@ class RecurringDonationSerializer(serializers.ModelSerializer):
             "is_active",
             "created_at",
         )
+
+
+class HadithSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.Hadith
+        fields = ("id", "text", "source", "created_at")

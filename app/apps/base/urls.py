@@ -42,4 +42,8 @@ urlpatterns = [
         "notifications/<int:notification_id>/read/",
         base_views.NotificationReadView.as_view(),
     ),
+
+    path("hadith/", base_views.HadithListView.as_view()),
+    path("hadith/<int:pk>/", base_views.HadithDetailView.as_view()),
+    path("hadith/random/", base_views.HadithRandomView.as_view()),
 ]

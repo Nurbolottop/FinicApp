@@ -281,3 +281,17 @@ class RecurringDonation(models.Model):
 
     def __str__(self):
         return f"{self.donor} -> {self.organization} ({self.amount} {self.interval})"
+
+
+class Hadith(models.Model):
+    text = models.TextField(verbose_name="Текст хадиса")
+    source = models.CharField(max_length=255, verbose_name="Книга-источник")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Хадис"
+        verbose_name_plural = "Хадисы"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Хадис из {self.source}"
