@@ -15,7 +15,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema
 from apps.accounts import models as accounts_models
 from apps.accounts import serializers as accounts_serializers
 from apps.accounts.permissions import IsDonor, IsOrganization
-from apps.accounts.services.otp import send_otp
+from apps.accounts.services.otp import send_otp, TEST_PHONE_NUMBER, TEST_OTP_CODE
 from apps.accounts.throttles import ScopedRateThrottleWithPeriods
 
 
@@ -131,7 +131,8 @@ class DonorVerifyView(GenericAPIView):
             otp.delete()
             return Response({"detail": "OTP expired."}, status=400)
 
-        if otp.code != code:
+        # Проверяем код - либо сгенерированный, либо тестовый 1234
+        if otp.code != code and code != TEST_OTP_CODE:
             return Response({"detail": "Invalid OTP."}, status=400)
 
         user = User.objects.filter(phone=phone, role=User.Roles.DONOR).first()
@@ -220,7 +221,8 @@ class DonorLoginVerifyView(GenericAPIView):
             otp.delete()
             return Response({"detail": "OTP expired."}, status=400)
 
-        if otp.code != code:
+        # Проверяем код - либо сгенерированный, либо тестовый 1234
+        if otp.code != code and code != TEST_OTP_CODE:
             return Response({"detail": "Invalid OTP."}, status=400)
 
         user = User.objects.filter(phone=phone, role=User.Roles.DONOR).first()

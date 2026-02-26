@@ -5,7 +5,15 @@ from apps.accounts.models import OTPCode
 from apps.accounts.services.whatsapp import WhatsAppService
 
 
-def generate_otp_code() -> str:
+# Тестовый номер для App Store review
+TEST_PHONE_NUMBER = "+996775232350"
+TEST_OTP_CODE = "1234"
+
+
+def generate_otp_code(phone: str = None) -> str:
+    # Для тестового номера всегда возвращаем тестовый код
+    if phone and phone.strip() == TEST_PHONE_NUMBER:
+        return TEST_OTP_CODE
     return str(random.randint(1000, 9999))
 
 
@@ -14,7 +22,7 @@ def send_otp(phone: str, purpose: str) -> bool:
     Создаёт OTPCode и отправляет его через WhatsApp.
     purpose: "register" или "login"
     """
-    code = generate_otp_code()
+    code = generate_otp_code(phone)
 
     OTPCode.objects.create(
         phone=phone,
