@@ -15,4 +15,5 @@ urlpatterns = [
 
     path("profile/donor/", accounts_views.DonorProfileEditView.as_view()),
     path("profile/org/", accounts_views.OrganizationProfileEditView.as_view()),
+    path("account/delete/", accounts_views.AccountDeleteView.as_view()),
 ]

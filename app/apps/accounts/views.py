@@ -73,8 +73,11 @@ class DonorRegisterView(GenericAPIView):
             },
         )
 
-        if not user.is_donor():
-            return Response({"detail": "User with this phone is not a donor."}, status=400)
+        if not created:
+            if not user.is_donor():
+                return Response({"detail": "User with this phone is not a donor."}, status=400)
+            if user.is_active:
+                return Response({"detail": "Пользователь с таким номером уже зарегистрирован."}, status=400)
 
         if created:
             user.set_unusable_password()
@@ -333,6 +336,20 @@ class DonorProfileEditView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class AccountDeleteView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Profile"],
+        summary="Delete account",
+        description="Удаляет аккаунт текущего пользователя. Требуется JWT access token.",
+    )
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        user.delete()
+        return Response({"status": "deleted"}, status=204)
 
 
 class OrganizationProfileEditView(GenericAPIView):
