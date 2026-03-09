@@ -21,6 +21,7 @@ from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schem
 
 from apps.base import models as base_models
 from apps.base import serializers as base_serializers
+from apps.base.utils.notifications import create_and_send_notification
 from apps.accounts import models as accounts_models
 from apps.accounts import serializers as accounts_serializers
 from apps.accounts.permissions import IsDonor, IsOrganization
@@ -178,6 +179,7 @@ class OrganizationStatsView(GenericAPIView):
 class ReportCreateView(CreateModelMixin, GenericAPIView):
     serializer_class = base_serializers.ReportCreateSerializer
     permission_classes = [IsOrganization]
+    parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
         serializer.save(
@@ -187,7 +189,7 @@ class ReportCreateView(CreateModelMixin, GenericAPIView):
     @extend_schema(
         tags=["Organization"],
         summary="Create report",
-        description="Создать отчёт (только организация).",
+        description="Создать отчёт (только организация). Поддерживает прикрепление нескольких фото/видео файлов через media_files.",
     )
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
@@ -354,16 +356,20 @@ class PaymentCompleteStubView(GenericAPIView):
         donation.status = base_models.Donation.Status.COMPLETED
         donation.save()
 
-        base_models.Notification.objects.create(
+        # Send notification to donor with FCM
+        create_and_send_notification(
             user=request.user,
             title="Платёж успешно завершён",
             message=f"Спасибо! Ваш донат на сумму {payment.amount} успешно зачислен.",
+            data={"type": "payment_completed", "payment_id": payment.id},
         )
 
-        base_models.Notification.objects.create(
+        # Send notification to organization with FCM
+        create_and_send_notification(
             user=donation.organization.user,
             title="Новый донат",
             message=f"Поступил донат на сумму {payment.amount}.",
+            data={"type": "new_donation", "donation_id": donation.id, "amount": str(payment.amount)},
         )
 
         return Response({
@@ -630,3 +636,51 @@ class HadithRandomView(GenericAPIView):
             )
         serializer = self.get_serializer(hadith)
         return Response(serializer.data)
+
+
+class FCMDeviceTokenRegisterView(CreateModelMixin, GenericAPIView):
+    serializer_class = base_serializers.FCMDeviceTokenCreateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Register FCM device token",
+        description="Регистрация FCM токена устройства для получения push-уведомлений.",
+        examples=[
+            OpenApiExample(
+                "Request",
+                value={"token": "fcm_device_token_here", "device_type": "android"},
+                request_only=True,
+            ),
+        ],
+    )
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class FCMDeviceTokenDeleteView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Delete FCM device token",
+        description="Удаление FCM токена устройства (отписаться от уведомлений).",
+    )
+    def post(self, request, *args, **kwargs):
+        token = request.data.get("token")
+        if not token:
+            return Response({"detail": "Token is required."}, status=400)
+
+        deleted, _ = base_models.FCMDeviceToken.objects.filter(
+            user=request.user,
+            token=token,
+        ).delete()
+
+        if deleted:
+            return Response({"status": "deleted"})
+        return Response({"detail": "Token not found."}, status=404)

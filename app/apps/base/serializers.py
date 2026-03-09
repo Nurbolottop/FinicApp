@@ -183,6 +183,12 @@ class DonationSerializer(serializers.ModelSerializer):
         )
 
 
+class ReportMediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.ReportMedia
+        fields = ("id", "file", "media_type", "created_at")
+
+
 class ReportSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(
         source="organization.name",
@@ -192,6 +198,7 @@ class ReportSerializer(serializers.ModelSerializer):
         source="campaign.title",
         read_only=True,
     )
+    media_files = ReportMediaSerializer(many=True, read_only=True)
 
     class Meta:
         model = base_models.Report
@@ -205,11 +212,18 @@ class ReportSerializer(serializers.ModelSerializer):
             "organization_name",
             "campaign",
             "campaign_title",
+            "media_files",
             "created_at",
         )
 
 
 class ReportCreateSerializer(serializers.ModelSerializer):
+    media_files = serializers.ListField(
+        child=serializers.FileField(),
+        required=False,
+        write_only=True,
+    )
+
     class Meta:
         model = base_models.Report
         fields = (
@@ -218,12 +232,52 @@ class ReportCreateSerializer(serializers.ModelSerializer):
             "amount_spent",
             "campaign",
             "file",
+            "media_files",
         )
 
     def validate_amount_spent(self, value):
         if value <= 0:
             raise serializers.ValidationError("Сумма должна быть больше 0.")
         return value
+
+    def validate_media_files(self, files):
+        if not files:
+            return files
+
+        image_count = 0
+        video_count = 0
+
+        for f in files:
+            name = f.name.lower()
+            if name.endswith((".mp4", ".mov", ".avi", ".mkv")):
+                video_count += 1
+            else:
+                image_count += 1
+
+        if image_count > 4:
+            raise serializers.ValidationError("Максимум 4 фото.")
+        if video_count > 1:
+            raise serializers.ValidationError("Максимум 1 видео.")
+
+        return files
+
+    def create(self, validated_data):
+        media_files = validated_data.pop("media_files", [])
+        report = super().create(validated_data)
+
+        for media_file in media_files:
+            file_name = media_file.name.lower()
+            if file_name.endswith((".mp4", ".mov", ".avi", ".mkv")):
+                media_type = base_models.ReportMedia.MediaType.VIDEO
+            else:
+                media_type = base_models.ReportMedia.MediaType.IMAGE
+
+            base_models.ReportMedia.objects.create(
+                report=report,
+                file=media_file,
+                media_type=media_type,
+            )
+        return report
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -312,3 +366,30 @@ class HadithSerializer(serializers.ModelSerializer):
     class Meta:
         model = base_models.Hadith
         fields = ("id", "text", "source", "created_at")
+
+
+class FCMDeviceTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.FCMDeviceToken
+        fields = ("token", "device_type")
+
+
+class FCMDeviceTokenCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.FCMDeviceToken
+        fields = ("token", "device_type")
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        token = validated_data["token"]
+
+        # Update or create token (prevent duplicates)
+        device_token, created = base_models.FCMDeviceToken.objects.update_or_create(
+            token=token,
+            defaults={
+                "user": user,
+                "device_type": validated_data.get("device_type", "android"),
+                "is_active": True,
+            },
+        )
+        return device_token

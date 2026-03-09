@@ -42,6 +42,14 @@ urlpatterns = [
         "notifications/<int:notification_id>/read/",
         base_views.NotificationReadView.as_view(),
     ),
+    path(
+        "notifications/fcm/register/",
+        base_views.FCMDeviceTokenRegisterView.as_view(),
+    ),
+    path(
+        "notifications/fcm/unregister/",
+        base_views.FCMDeviceTokenDeleteView.as_view(),
+    ),
 
     path("hadith/", base_views.HadithListView.as_view()),
     path("hadith/<int:pk>/", base_views.HadithDetailView.as_view()),

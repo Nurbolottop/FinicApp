@@ -168,6 +168,32 @@ class Report(models.Model):
         return f"{self.title} ({self.organization.name})"
 
 
+class ReportMedia(models.Model):
+    class MediaType(models.TextChoices):
+        IMAGE = "image", "Фото"
+        VIDEO = "video", "Видео"
+
+    report = models.ForeignKey(
+        Report,
+        on_delete=models.CASCADE,
+        related_name="media_files",
+    )
+    file = models.FileField(upload_to="reports/media/")
+    media_type = models.CharField(
+        max_length=10,
+        choices=MediaType.choices,
+        default=MediaType.IMAGE,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Медиа файл отчёта"
+        verbose_name_plural = "Медиа файлы отчётов"
+
+    def __str__(self):
+        return f"{self.media_type} для {self.report.title}"
+
+
 class Payment(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Ожидает"
@@ -230,6 +256,31 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.user}"
+
+
+class FCMDeviceToken(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="fcm_tokens",
+    )
+    token = models.CharField(max_length=255, unique=True)
+    device_type = models.CharField(
+        max_length=10,
+        choices=[("ios", "iOS"), ("android", "Android")],
+        default="android",
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "FCM токен устройства"
+        verbose_name_plural = "FCM токены устройств"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.user} — {self.device_type}"
 
 
 class DonorBankDetails(models.Model):

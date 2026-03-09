@@ -56,6 +56,13 @@ class ReportAdmin(admin.ModelAdmin):
     list_filter = ("organization",)
 
 
+@admin.register(base_models.ReportMedia)
+class ReportMediaAdmin(admin.ModelAdmin):
+    list_display = ("id", "report", "media_type", "created_at")
+    list_filter = ("media_type",)
+    search_fields = ("report__title",)
+
+
 @admin.register(base_models.Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = (
@@ -76,6 +83,13 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "title", "is_read", "created_at")
     list_filter = ("is_read",)
     search_fields = ("user__email", "title")
+
+
+@admin.register(base_models.FCMDeviceToken)
+class FCMDeviceTokenAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "device_type", "is_active", "created_at")
+    list_filter = ("device_type", "is_active")
+    search_fields = ("user__email", "token")
 
 
 @admin.register(base_models.DonorBankDetails)
