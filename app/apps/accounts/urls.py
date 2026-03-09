@@ -11,6 +11,8 @@ urlpatterns = [
     path("auth/donor/login/verify/", accounts_views.DonorLoginVerifyView.as_view()),
 
     path("auth/org/login/", accounts_views.OrgLoginView.as_view()),
+    path("auth/org/request/", accounts_views.OrganizationRequestCreateView.as_view()),
+    path("auth/org/request/status/", accounts_views.MyOrganizationRequestView.as_view()),
     path("auth/refresh/", TokenRefreshView.as_view()),
 
     path("profile/donor/", accounts_views.DonorProfileEditView.as_view()),

@@ -382,3 +382,68 @@ class OrganizationProfileEditView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class OrganizationRequestCreateView(CreateModelMixin, GenericAPIView):
+    """Создание заявки организации"""
+
+    permission_classes = [permissions.AllowAny]
+    serializer_class = accounts_serializers.OrganizationRequestCreateSerializer
+
+    @extend_schema(
+        tags=["Auth"],
+        summary="Create organization request",
+        description="Создать заявку для регистрации организации. Требуется подтверждение администратора.",
+        examples=[
+            OpenApiExample(
+                "Request",
+                value={
+                    "full_name": "Иван Иванов",
+                    "phone": "+996555000111",
+                    "email": "org@example.com",
+                    "org_name": "Благотворительный фонд \"Надежда\"",
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class MyOrganizationRequestView(GenericAPIView):
+    """Просмотр своей заявки организации (по телефону)"""
+
+    permission_classes = [permissions.AllowAny]
+    serializer_class = accounts_serializers.OrganizationRequestSerializer
+
+    @extend_schema(
+        tags=["Auth"],
+        summary="Get my organization request status",
+        description="Проверить статус заявки организации по номеру телефона.",
+        parameters=[
+            OpenApiParameter(
+                name="phone",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Номер телефона для проверки заявки.",
+            ),
+        ],
+    )
+    def get(self, request, *args, **kwargs):
+        phone = request.query_params.get("phone")
+        if not phone:
+            return Response({"detail": "Phone parameter is required."}, status=400)
+
+        phone = _normalize_phone(phone)
+
+        try:
+            org_request = accounts_models.OrganizationRequest.objects.filter(
+                phone=phone
+            ).latest("created_at")
+        except accounts_models.OrganizationRequest.DoesNotExist:
+            return Response({"detail": "Request not found."}, status=404)
+
+        serializer = self.get_serializer(org_request)
+        return Response(serializer.data)

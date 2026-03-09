@@ -52,3 +52,24 @@ class DonorProfileAdmin(admin.ModelAdmin):
 class OrganizationAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "verified_status", "total_raised")
     search_fields = ("name", "user__email")
+
+
+@admin.register(accounts_models.OrganizationRequest)
+class OrganizationRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "org_name",
+        "full_name",
+        "phone",
+        "status",
+        "created_at",
+    )
+    list_filter = ("status", "created_at")
+    search_fields = ("org_name", "full_name", "phone", "email")
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Контактное лицо", {"fields": ("full_name", "phone", "email")}),
+        ("Организация", {"fields": ("org_name",)}),
+        ("Статус", {"fields": ("status", "admin_comment", "created_user")}),
+        ("Даты", {"fields": ("created_at", "updated_at")}),
+    )

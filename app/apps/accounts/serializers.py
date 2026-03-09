@@ -135,3 +135,38 @@ class OrganizationProfileEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = accounts_models.Organization
         fields = ("name", "description", "city", "website", "logo", "email", "phone")
+
+
+class OrganizationRequestCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания заявки организации"""
+
+    class Meta:
+        model = accounts_models.OrganizationRequest
+        fields = (
+            "full_name",
+            "phone",
+            "email",
+            "org_name",
+        )
+
+
+class OrganizationRequestSerializer(serializers.ModelSerializer):
+    """Сериализатор для просмотра заявки"""
+
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = accounts_models.OrganizationRequest
+        fields = (
+            "id",
+            "full_name",
+            "phone",
+            "email",
+            "org_name",
+            "status",
+            "status_display",
+            "admin_comment",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields

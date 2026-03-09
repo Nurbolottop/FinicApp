@@ -102,3 +102,52 @@ class OTPCode(models.Model):
 
     def is_expired(self, ttl_minutes: int = 5) -> bool:
         return timezone.now() - self.created_at > timedelta(minutes=ttl_minutes)
+
+
+class OrganizationRequest(models.Model):
+    """Заявка организации на доступ (при логине)"""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "На рассмотрении"
+        APPROVED = "approved", "Одобрена"
+        REJECTED = "rejected", "Отклонена"
+
+    # Контактные данные подающего заявку
+    full_name = models.CharField(max_length=255, verbose_name="ФИО")
+    phone = models.CharField(max_length=20, verbose_name="Телефон")
+    email = models.EmailField(verbose_name="Email")
+
+    # Данные об организации
+    org_name = models.CharField(max_length=255, verbose_name="Название организации")
+
+    # Статус и даты
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name="Статус",
+    )
+
+    # Комментарий администратора (при отклонении/одобрении)
+    admin_comment = models.TextField(blank=True, verbose_name="Комментарий администратора")
+
+    # Связанный пользователь (если заявка одобрена и создан пользователь)
+    created_user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="org_request",
+        verbose_name="Созданный пользователь",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата подачи")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
+    class Meta:
+        verbose_name = "Заявка организации"
+        verbose_name_plural = "Заявки организаций"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.org_name} ({self.full_name}) - {self.get_status_display()}"
