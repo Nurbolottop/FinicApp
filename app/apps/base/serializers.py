@@ -197,6 +197,8 @@ class ReportSerializer(serializers.ModelSerializer):
     campaign_title = serializers.CharField(
         source="campaign.title",
         read_only=True,
+        allow_null=True,
+        default=None,
     )
     media_files = ReportMediaSerializer(many=True, read_only=True)
 
