@@ -11,7 +11,6 @@ from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -70,7 +69,7 @@ class MyReportsView(ListModelMixin, GenericAPIView):
         try:
             organization = user.organization
         except ObjectDoesNotExist:
-            raise ValidationError("User has no organization")
+            return base_models.Report.objects.none()
 
         return base_models.Report.objects.filter(
             organization=organization
@@ -99,7 +98,7 @@ class MyReportDetailView(RetrieveModelMixin, GenericAPIView):
         try:
             organization = user.organization
         except ObjectDoesNotExist:
-            raise ValidationError("User has no organization")
+            return base_models.Report.objects.none()
 
         return base_models.Report.objects.filter(organization=organization)
 
