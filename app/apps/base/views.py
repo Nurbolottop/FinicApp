@@ -683,3 +683,58 @@ class FCMDeviceTokenDeleteView(GenericAPIView):
         if deleted:
             return Response({"status": "deleted"})
         return Response({"detail": "Token not found."}, status=404)
+
+
+class ContentReportCreateView(CreateModelMixin, GenericAPIView):
+    serializer_class = base_serializers.ContentReportSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        report = serializer.save(user=self.request.user)
+        
+        # Send email notification to admin
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        try:
+            content_type_display = report.get_content_type_display()
+            subject = f"Новая жалоба на {content_type_display}"
+            message = f"""
+Получена новая жалоба:
+
+Пользователь: {report.user.email} (ID: {report.user.id})
+Тип контента: {content_type_display}
+ID контента: {report.content_id}
+Причина: {report.reason}
+Дата: {report.created_at.strftime('%Y-%m-%d %H:%M:%S')}
+            """
+            
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=["asanalievurmat10@gmail.com"],
+                fail_silently=True,
+            )
+        except Exception as e:
+            # Log error but don't fail the request
+            print(f"Failed to send email notification: {e}")
+
+    @extend_schema(
+        tags=["Reports"],
+        summary="Create content report",
+        description="Создать жалобу на кампанию или организацию.",
+        examples=[
+            OpenApiExample(
+                "Request",
+                value={
+                    "content_type": "campaign",
+                    "content_id": 42,
+                    "reason": "This campaign contains misleading information about the goals.",
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)

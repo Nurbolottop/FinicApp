@@ -346,3 +346,34 @@ class Hadith(models.Model):
 
     def __str__(self):
         return f"Хадис из {self.source}"
+
+
+class ContentReport(models.Model):
+    """Жалоба на кампанию или организацию"""
+
+    class ContentType(models.TextChoices):
+        CAMPAIGN = "campaign", "Кампания"
+        ORGANIZATION = "organization", "Организация"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="content_reports",
+        verbose_name="Пользователь",
+    )
+    content_type = models.CharField(
+        max_length=20,
+        choices=ContentType.choices,
+        verbose_name="Тип контента",
+    )
+    content_id = models.PositiveIntegerField(verbose_name="ID контента")
+    reason = models.TextField(verbose_name="Причина жалобы")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+
+    class Meta:
+        verbose_name = "Жалоба на контент"
+        verbose_name_plural = "Жалобы на контент"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Жалоба от {self.user} на {self.get_content_type_display()} #{self.content_id}"

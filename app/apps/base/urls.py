@@ -54,4 +54,6 @@ urlpatterns = [
     path("hadith/", base_views.HadithListView.as_view()),
     path("hadith/<int:pk>/", base_views.HadithDetailView.as_view()),
     path("hadith/random/", base_views.HadithRandomView.as_view()),
+    
+    path("reports/", base_views.ContentReportCreateView.as_view()),
 ]

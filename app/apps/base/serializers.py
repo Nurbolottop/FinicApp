@@ -395,3 +395,30 @@ class FCMDeviceTokenCreateSerializer(serializers.ModelSerializer):
             },
         )
         return device_token
+
+
+class ContentReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = base_models.ContentReport
+        fields = ("id", "user", "content_type", "content_id", "reason", "created_at")
+        read_only_fields = ("id", "user", "created_at")
+
+    def validate_content_type(self, value):
+        if value not in ["campaign", "organization"]:
+            raise serializers.ValidationError("Invalid content type.")
+        return value
+
+    def validate(self, attrs):
+        content_type = attrs.get("content_type")
+        content_id = attrs.get("content_id")
+
+        # Verify that the content exists
+        if content_type == "campaign":
+            if not base_models.Campaign.objects.filter(id=content_id).exists():
+                raise serializers.ValidationError("Campaign does not exist.")
+        elif content_type == "organization":
+            from apps.accounts.models import Organization
+            if not Organization.objects.filter(id=content_id).exists():
+                raise serializers.ValidationError("Organization does not exist.")
+
+        return attrs

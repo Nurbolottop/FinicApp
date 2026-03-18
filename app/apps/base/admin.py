@@ -107,3 +107,15 @@ class HadithAdmin(admin.ModelAdmin):
     def text_preview(self, obj):
         return obj.text[:100] + "..." if len(obj.text) > 100 else obj.text
     text_preview.short_description = "Текст хадиса"
+
+
+@admin.register(base_models.ContentReport)
+class ContentReportAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "content_type", "content_id", "reason_preview", "created_at")
+    search_fields = ("user__email", "reason")
+    list_filter = ("content_type", "created_at")
+    readonly_fields = ("user", "content_type", "content_id", "reason", "created_at")
+
+    def reason_preview(self, obj):
+        return obj.reason[:100] + "..." if len(obj.reason) > 100 else obj.reason
+    reason_preview.short_description = "Причина"
