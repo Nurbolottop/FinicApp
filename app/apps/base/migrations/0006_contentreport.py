@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('base', '0005_reportmedia'),
+        ('base', '0004_fcmdevicetoken'),
     ]
 
     operations = [
